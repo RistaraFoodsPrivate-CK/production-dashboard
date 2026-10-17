@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2b1545"><title>Production vs Indent Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f5f2;--sf:#fff;--tx:#14231c;--mu:#66756d;--ln:#dde3dd;--ac:#0f6b4f;--ex:#b7791f;--sh:#c0392b;--ok:#1e8e5a;--fresh:#2e9e5b;--ambient:#d9922b;--chilled:#2b7bd6;--bp:#8a56c9;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1713;--sf:#18221c;--tx:#e8f0ea;--mu:#93a499;--ln:#2a382f;--ac:#3dbb8d}}
+:root[data-theme="dark"]{--bg:#0f1713;--sf:#18221c;--tx:#e8f0ea;--mu:#93a499;--ln:#2a382f;--ac:#3dbb8d}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.45 Manrope,system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:#2b1545;z-index:10}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;transition:grid-template-columns .2s}
+.app.col{grid-template-columns:56px 1fr}
+aside{background:#2b1545;color:#efe6f8;border-right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 8px 10px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;overflow:hidden}
+aside .brand{font-weight:800;padding:6px 8px 12px;white-space:nowrap}
+aside button{display:flex;align-items:center;gap:10px;border:0;background:none;color:#efe6f8;padding:10px;border-radius:9px;font:600 13px Manrope,sans-serif;cursor:pointer;text-align:left;white-space:nowrap;width:100%}
+aside button i{font-style:normal;width:20px;text-align:center;flex:none}
+aside button:hover{background:rgba(255,255,255,.1)}aside button.on{background:#7a49b8;color:#fff}aside button:focus-visible{outline:2px solid #d8bff5;outline-offset:-2px}
+aside hr{border:0;border-top:1px solid rgba(255,255,255,.18);width:100%;margin:8px 0}
+.app.col aside .lb{display:none}
+main{padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;max-width:1100px;width:100%}
+h1{font-size:20px;margin:0 0 12px;font-weight:800}h1 small{display:block;font-weight:400;color:var(--mu);font-size:12px}
+.btn{border:1px solid var(--ln);background:var(--sf);color:var(--tx);padding:8px 13px;border-radius:8px;font:600 13px Manrope,sans-serif;cursor:pointer}
+.btn.p{background:var(--ac);color:#fff;border-color:var(--ac)}.btn.d{color:var(--sh)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+input,select,textarea{background:var(--sf);color:var(--tx);border:1px solid var(--ln);border-radius:8px;padding:8px;font:13px Manrope,sans-serif;max-width:100%}
+.chip{border:1px solid var(--ln);background:var(--sf);color:var(--tx);border-radius:99px;padding:5px 12px;font:600 12px Manrope,sans-serif;cursor:pointer}.chip.on{color:#fff;border-color:transparent}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:12px;padding:14px}
+.k b{display:block;font-size:24px;font-weight:800;letter-spacing:-.5px}.k span{color:var(--mu);font-size:12px}
+.k.hero{background:var(--ac);color:#fff;border-color:var(--ac)}.k.hero span{color:#d7efe4}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:12px}
+.cat{border-top:4px solid var(--c)}.cat h3{margin:0 0 8px;font-size:14px;display:flex;justify-content:space-between}
+.row{display:flex;justify-content:space-between;padding:2px 0}.row span{color:var(--mu)}
+.prog{height:7px;background:var(--ln);border-radius:9px;margin-top:8px;overflow:hidden}.prog i{display:block;height:100%;background:var(--c)}
+.scroll{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:620px}
+th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--ln);white-space:nowrap}th{color:var(--mu);font-weight:600;font-size:12px}
+th:nth-child(-n+3),td:nth-child(-n+3){text-align:left}
+.b{padding:2px 9px;border-radius:99px;font-size:11px;font-weight:800;color:#fff}.b.OK{background:var(--ok)}.b.Excess{background:var(--ex)}.b.Short{background:var(--sh)}
+.pos{color:var(--ex)}.neg{color:var(--sh)}h2{font-size:15px;margin:0 0 10px}
+.tg{position:relative;width:42px;height:24px;display:inline-block;vertical-align:middle}.tg input{opacity:0;width:0;height:0}
+.tg s{position:absolute;inset:0;background:var(--ln);border-radius:24px;transition:.2s;cursor:pointer}
+.tg s:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.tg input:checked+s{background:var(--ac)}.tg input:checked+s:before{transform:translateX(18px)}
+.tg input:focus-visible+s{outline:2px solid var(--ac);outline-offset:2px}
+.sk{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid var(--ln)}
+dialog{border:1px solid var(--ln);background:var(--sf);color:var(--tx);border-radius:14px;padding:18px;width:min(380px,92vw)}
+dialog::backdrop{background:#0008}dialog label{display:block;margin:10px 0 3px;font-size:12px;color:var(--mu)}dialog input,dialog select{width:100%}
+.filters{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding:8px 0;border-bottom:1px solid var(--ln)}.btn.tgl2{padding:1px 11px;font-size:18px;line-height:1.3;flex:none}
+.hide{display:none!important}.empty{text-align:center;color:var(--mu);padding:26px}.mu{color:var(--mu)}
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9;padding:16px}
+#login .card{width:min(340px,100%)}#login input{width:100%;margin-bottom:10px}#err{color:var(--sh);min-height:18px;font-size:12px}
+#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:9px 16px;border-radius:9px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;z-index:20}#toast.on{opacity:1}
+</style></head><body>
+<div id="login"><div class="card"><h1>Sign in<small>Production vs Indent Dashboard</small></h1>
+<input id="em" type="text" placeholder="User ID or email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"><input id="pw" type="password" placeholder="Password" autocomplete="current-password" autocapitalize="off" autocorrect="off">
+<div id="err"></div><button class="btn p" id="go" style="width:100%">Sign in</button></div></div>
+
+<div class="app col hide" id="app">
+<aside>
+<button id="tgl" aria-label="Collapse menu"><i>☰</i><span class="lb brand" style="padding:0">Production</span></button>
+<hr>
+<button class="nav on" data-t="dash"><i>📊</i><span class="lb">Dashboard</span></button>
+
+<hr>
+<button id="bIndent"><i>📝</i><span class="lb">Unit Indent</span></button>
+<button id="bProd"><i>🏭</i><span class="lb">Production</span></button>
+<button id="bMan"><i>✍️</i><span class="lb">Manual entry</span></button>
+<button id="bDl"><i>⬇️</i><span class="lb">Download report</span></button>
+<span style="flex:1"></span>
+<button class="nav" data-t="admin"><i>⚙️</i><span class="lb">Admin control</span></button>
+<button id="out"><i>🚪</i><span class="lb">Sign out</span></button>
+</aside>
+<main>
+<section id="dash">
+<h1>Indent vs production<small>All quantities in kg (litres for ml products). Pcs are converted using the pack size from Admin.</small></h1>
+<div class="bar filters"><input type="date" id="from" aria-label="From date"><input type="date" id="to" aria-label="To date"><div class="bar" id="chips" style="margin:0"></div></div>
+<div class="kpis" id="kpis"></div><div class="grid" id="cats"></div>
+<div class="card" style="margin-bottom:12px"><h2>Daily indent vs production</h2><div class="scroll" id="chart"></div></div>
+<div class="card"><h2>SKU-wise excess and short</h2><div class="scroll"><table><thead><tr><th>SKU</th><th>Category</th><th>Entry unit</th><th>Indent</th><th>TR qty</th><th>Difference</th><th>Status</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="card" style="margin-top:12px"><div class="bar" style="margin:0 0 8px"><h2 style="margin:0;flex:1">Trend: indent vs TR qty</h2><select id="tsel" aria-label="Trend SKU"></select></div><p class="mu" style="margin:0 0 8px;font-size:12px">Follows the From and To dates and category chips above. Pick one SKU to see only its trend.</p><div class="scroll" id="t1"></div></div>
+<div class="card" style="margin-top:12px"><h2>Trend: excess and short (TR − indent)</h2><div class="scroll" id="t2"></div></div>
+</section>
+
+<section id="admin" class="hide"><h1>Admin control<small>Switch SKUs on to show them in the dashboard</small></h1>
+<div class="card" style="margin-bottom:12px"><h2>SKU switches</h2>
+<div class="bar"><input id="q" placeholder="Search SKU"><select id="cf"><option value="">All categories</option><option>Fresh</option><option>Ambient</option><option>Chilled</option><option>BP</option></select><button class="btn" id="allOn">All on</button><button class="btn" id="allOff">All off</button></div><div id="sklist"></div></div>
+<div class="card" style="margin-bottom:12px"><h2>Add one SKU</h2>
+<div class="bar"><input id="nn" placeholder="Prod name"><select id="nc"><option>Fresh</option><option>Ambient</option><option>Chilled</option><option>BP</option></select>
+<select id="nu"><option>pcs</option><option>kg</option><option>ltr</option></select><input id="ns" type="number" min="0" step="any" placeholder="Pack size" style="width:100px"><select id="np"><option>g</option><option>kg</option><option>ml</option><option>ltr</option></select><button class="btn p" id="addSku">Add SKU</button></div>
+<p class="mu" style="margin:0">For pcs, pack size tells how much is in one piece, such as 240 ml for rose milk. For kg or ltr, leave pack size empty.</p></div>
+<div class="card" style="margin-bottom:12px" id="usersCard"><h2>Users and access</h2><p class="mu" style="margin:0 0 10px">Create a user ID and password, and tick the options that user can use. Only you (admin) can see this card.</p><div class="bar"><input id="uId" placeholder="User ID" autocapitalize="off" autocomplete="off"><input id="uPw" placeholder="Password" autocomplete="off"></div><div class="bar" id="uPerm"><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="dash" checked>Dashboard</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="indent" checked>Unit Indent</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="prod" checked>Production</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="manual" checked>Manual entry</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="dl" checked>Download report</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="admin" >Admin control</label><label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-p="edit" >Edit / delete entries</label></div><button class="btn p" id="addUser">Add user</button><div id="ulist" style="margin-top:10px"></div></div>
+<div class="card"><h2>Import SKUs</h2><p class="mu" style="margin:0 0 10px">Upload an Excel (.xlsx) or CSV file with headers: Prod Name, Usage unit, Usage Measurements, Prod Format. Usage unit is pcs, kg or ltr. For pcs, write the measurement of one piece, such as 240 ml or 250 g. Prod Format is Fresh, Ambient, Chiller or BP. A name that already exists is updated.</p>
+<div class="bar"><button class="btn" id="tpl">Download template</button><input type="file" id="file" accept=".xlsx,.csv,.txt,text/csv"></div>
+<button class="btn d" id="clr">Clear all data</button><div class="bar" style="margin-top:10px"><button class="btn" id="bk">Backup data (file)</button><span class="mu">Restore:</span><input type="file" id="rs" accept=".json"></div></div>
+</section>
+<section id="none" class="hide"><div class="empty">Use the buttons on the left.</div></section></main></div>
+
+<dialog id="dI"><h2>Unit Indent</h2><label>Date</label><input type="date" id="iD"><label>SKU</label><select id="iS"></select><label id="iL">Qty</label><input type="number" min="0" step="any" id="iQ"><div id="iV" class="mu"></div><hr style="border:0;border-top:1px solid var(--ln);margin:14px 0 8px"><div class="mu" style="font-size:12px">Or upload many rows from an Excel or CSV file: Date, Item Name, Quantity Transferred, Usage unit. The same item on the same date is added up.</div><div class="bar" style="margin:6px 0"><button class="btn" id="iT">Download template</button></div><input type="file" id="iF" accept=".xlsx,.csv,.txt,text/csv"><div class="bar" style="margin:14px 0 0"><button class="btn p" id="iOk">Save indent</button><button class="btn" data-x>Cancel</button></div></dialog>
+<dialog id="dP"><h2>Production</h2><label>Date</label><input type="date" id="pD"><label>SKU</label><select id="pS"></select><label id="pL">Qty</label><input type="number" min="0" step="any" id="pQ"><div id="pV" class="mu"></div><hr style="border:0;border-top:1px solid var(--ln);margin:14px 0 8px"><div class="mu" style="font-size:12px">Or upload many rows from a CSV file: Date, Prod Name, TR Qty</div><div class="bar" style="margin:6px 0"><button class="btn" id="pT">Download template</button></div><input type="file" id="pF" accept=".xlsx,.csv,.txt,text/csv"><div class="bar" style="margin:14px 0 0"><button class="btn p" id="pOk">Save production</button><button class="btn" data-x>Cancel</button></div></dialog>
+<dialog id="dR"><h2>Download report</h2><p class="mu" style="margin:0 0 12px">Uses the From and To dates and chips on the dashboard.</p><div class="bar"><button class="btn p" data-k="xlsx">Excel</button><button class="btn p" data-k="pdf">PDF</button><button class="btn" data-k="csv">CSV</button><button class="btn" data-x>Cancel</button></div></dialog>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<dialog id="dE"><h2>Edit SKU</h2><label>Prod name</label><input id="eN"><label>Prod format</label><select id="eC"><option>Fresh</option><option>Ambient</option><option>Chilled</option><option>BP</option></select><label>Usage unit</label><select id="eU"><option>pcs</option><option>kg</option><option>ltr</option></select><div id="eW"><label>Measurement of one piece</label><div class="bar" style="margin:0"><input id="eS" type="number" min="0" step="any" style="width:50%"><select id="eP" style="width:40%"><option>g</option><option>kg</option><option>ml</option><option>ltr</option></select></div></div><div class="bar" style="margin:14px 0 0"><button class="btn p" id="eOk">Save changes</button><button class="btn" data-x>Cancel</button></div></dialog>
+<dialog id="dQ" style="width:min(520px,94vw)"><h2>Edit quantities</h2><div class="mu" id="qT" style="margin-bottom:8px"></div><div style="max-height:50vh;overflow:auto"><table style="min-width:0"><thead><tr><th>Date</th><th>Indent</th><th>TR qty</th><th></th></tr></thead><tbody id="qB"></tbody></table></div><div class="bar" style="margin:12px 0 0"><button class="btn" id="qA">+ Add date</button></div><div class="bar" style="margin:6px 0 0"><button class="btn p" id="qOk">Save changes</button><button class="btn" data-x>Cancel</button></div></dialog>
+<dialog id="dM"><h2>Manual entry</h2><label>Date</label><input type="date" id="mD"><label>Prod name</label><select id="mS"></select><label id="mIl">Indent</label><input type="number" min="0" step="any" id="mI"><label id="mPl">Production</label><input type="number" min="0" step="any" id="mP"><div id="mV" class="mu" style="margin-top:6px"></div><label>Prod type</label><input id="mC" readonly><div class="bar" style="margin:14px 0 0"><button class="btn p" id="mOk">Save entry</button><button class="btn" data-x>Cancel</button></div></dialog>
+<div id="toast"></div>
+
+<script>
+const CATS={Fresh:'--fresh',Ambient:'--ambient',Chilled:'--chilled',BP:'--bp'},H='48534e1a303aaa467aafe0f510b3c4f50002c5ae504dc35724125cc698c01130';
+const $=s=>document.querySelector(s),iso=d=>d.toISOString().slice(0,10),today=iso(new Date());
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=v=>(+v||0).toLocaleString('en-IN',{maximumFractionDigits:1}),sg=v=>(v>0?'+':'')+n(v);
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2000)};
+let S={skus:[],recs:{}},catSel=new Set(Object.keys(CATS));
+try{const x=localStorage.getItem('pd2');if(x)S=JSON.parse(x)}catch(e){}
+const save=()=>{try{localStorage.setItem('pd2',JSON.stringify(S))}catch(e){}};
+$('#to').value=today;$('#from').value=iso(new Date(Date.now()-6*864e5));
+S.users=S.users||[];let ME={admin:true,perms:{}};
+const PL={dash:'Dashboard',indent:'Unit Indent',prod:'Production',manual:'Manual entry',dl:'Download report',admin:'Admin control',edit:'Edit / delete entries'};
+function can(p){return ME.admin||!!(ME.perms&&ME.perms[p])}
+function applyPerms(){const m={bIndent:'indent',bProd:'prod',bMan:'manual',bDl:'dl'};Object.keys(m).forEach(id=>$('#'+id).classList.toggle('hide',!can(m[id])));
+ document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('hide',!can(b.dataset.t==='dash'?'dash':'admin')));$('#usersCard').classList.toggle('hide',!ME.admin);
+ const first=can('dash')?'dash':can('admin')?'admin':'';const nb=first&&document.querySelector('.nav[data-t="'+first+'"]');
+ if(nb)nb.click();else{$('#dash').classList.add('hide');$('#admin').classList.add('hide');$('#none').classList.remove('hide')}}
+function renderUsers(){if(!ME.admin)return;$('#ulist').innerHTML=S.users.length?S.users.map(u=>`<div class="sk" style="align-items:flex-start;flex-wrap:wrap"><div><b>${esc(u.id)}</b><div class="bar" style="margin:6px 0 0">${Object.keys(PL).map(k=>`<label style="display:flex;gap:4px;align-items:center;font-size:12px"><input type="checkbox" data-u="${esc(u.id)}" data-p="${k}" ${u.perms&&u.perms[k]?'checked':''}>${PL[k]}</label>`).join('')}</div></div><div><button class="btn" data-ur="${esc(u.id)}">Reset password</button> <button class="btn d" data-ud="${esc(u.id)}">Remove</button></div></div>`).join(''):'<div class="empty">No users yet.</div>'}
+
+// ---- login (basic gate only: it is checked in the browser)
+function sha256(m){const r=(x,n)=>x>>>n|x<<32-n,K=[],H=[];for(let n=2;K.length<64;n++){let p=1;for(let i=2;i*i<=n;i++)if(n%i==0)p=0;if(p){if(H.length<8)H.push(Math.pow(n,.5)%1*4294967296|0);K.push(Math.pow(n,1/3)%1*4294967296|0)}}
+ const b=new TextEncoder().encode(m),l=b.length,N=(l+8>>6)+1<<6,u=new Uint8Array(N);u.set(b);u[l]=128;const dv=new DataView(u.buffer);dv.setUint32(N-4,l*8);
+ for(let o=0;o<N;o+=64){const W=[];for(let i=0;i<64;i++)W[i]=i<16?dv.getUint32(o+i*4)|0:(r(W[i-2],17)^r(W[i-2],19)^W[i-2]>>>10)+W[i-7]+(r(W[i-15],7)^r(W[i-15],18)^W[i-15]>>>3)+W[i-16]|0;
+  let[a,b2,c,d,e,f,g,hh]=H;for(let i=0;i<64;i++){const t1=hh+(r(e,6)^r(e,11)^r(e,25))+(e&f^~e&g)+K[i]+W[i]|0,t2=(r(a,2)^r(a,13)^r(a,22))+(a&b2^a&c^b2&c)|0;hh=g;g=f;f=e;e=d+t1|0;d=c;c=b2;b2=a;a=t1+t2|0}
+  [a,b2,c,d,e,f,g,hh].forEach((v,i)=>H[i]=H[i]+v|0)}
+ return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('')}
+async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return sha256(s)}}
+function enter(){heal();$('#login').classList.add('hide');$('#app').classList.remove('hide');applyPerms();render()}
+try{if(sessionStorage.getItem('pdAuth')==='1'){ME={admin:true,perms:{}};enter()}else{const id=sessionStorage.getItem('pdUser'),u=id&&S.users.find(x=>x.id===id);if(u){ME={admin:false,perms:u.perms||{}};enter()}}}catch(e){}
+$('#go').onclick=async()=>{const id=$('#em').value.trim().toLowerCase(),pw=$('#pw').value.trim();let hs='';try{hs=await hash(id+':'+pw)}catch(e){}
+ if(hs===H){try{sessionStorage.setItem('pdAuth','1');sessionStorage.removeItem('pdUser')}catch(e){}ME={admin:true,perms:{}};enter()}
+ else{const u=S.users.find(x=>x.id===id&&x.h===hs);if(u){try{sessionStorage.setItem('pdUser',id);sessionStorage.removeItem('pdAuth')}catch(e){}ME={admin:false,perms:u.perms||{}};enter()}else $('#err').textContent='User ID or password is incorrect.'}};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#go').click()};
+$('#out').onclick=()=>{try{sessionStorage.removeItem('pdAuth')}catch(e){}location.reload()};
+
+// ---- sidebar
+$('#tgl').onclick=()=>$('#app').classList.toggle('col');
+document.querySelectorAll('.nav').forEach(b=>b.onclick=()=>{document.querySelectorAll('.nav').forEach(x=>x.classList.toggle('on',x===b));$('#dash').classList.toggle('hide',b.dataset.t!=='dash');$('#admin').classList.toggle('hide',b.dataset.t!=='admin');render()});
+
+// ---- units: factor converts entered qty to kg (or L for ml products)
+function factor(s){if(s.uom!=='pcs')return 1;const z=+s.size||0;return s.pu==='g'||s.pu==='ml'?z/1000:z}
+const base=s=>(s.uom==='ltr'||s.pu==='ml'||s.pu==='ltr')?'L':'kg';
+const ulabel=s=>s.uom==='pcs'?`pcs × ${s.size||'?'} ${s.pu}`:s.uom;
+function addSku(name,cat,uom,size,pu){name=(name||'').trim();let cl=String(cat).trim().toLowerCase();if(cl==='chiller')cl='chilled';cat=Object.keys(CATS).find(c=>c.toLowerCase()===cl);uom=String(uom||'kg').trim().toLowerCase();pu=String(pu||'g').trim().toLowerCase();
+ if(uom==='l'||uom==='litre'||uom==='liter')uom='ltr';if(pu==='l'||pu==='litre'||pu==='liter')pu='ltr';
+ if(!name||S.skus.some(s=>nn(s.name)===nn(name))||!cat||!['pcs','kg','ltr'].includes(uom)||!['g','kg','ml','ltr'].includes(pu)||(uom==='pcs'&&!(+size>0)))return false;
+ S.skus.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),name,cat,uom,size:uom==='pcs'?+size:0,pu,on:true});return true}
+function upsert(date,sku,f){const k=date+'|'+sku;S.recs[k]=Object.assign({date,sku,indent:0,prod:0},S.recs[k],f)}
+
+function data(only){const f=$('#from').value,t=$('#to').value,m={},days={};
+ S.skus.filter(s=>s.on&&catSel.has(s.cat)&&(!only||s.id===only)).forEach(s=>m[s.id]={s,indent:0,prod:0});
+ Object.values(S.recs).forEach(r=>{const o=m[r.sku];if(!o||r.date<f||r.date>t)return;const k=factor(o.s),i=r.indent*k,p=r.prod*k;o.indent+=i;o.prod+=p;o.ie=(o.ie||0)+r.indent;o.pe=(o.pe||0)+r.prod;const d=days[r.date]=days[r.date]||{i:0,p:0};d.i+=i;d.p+=p});
+ const rows=Object.values(m).filter(o=>o.indent||o.prod).map(o=>{o.df=o.prod-o.indent;o.st=Math.abs(o.df)<1e-6?'OK':o.df>0?'Excess':'Short';return o});return{rows,days}}
+
+function render(){
+ const allOn=catSel.size===Object.keys(CATS).length;
+ $('#chips').innerHTML=`<button class="chip ${allOn?'on':''}" style="${allOn?'background:var(--ac)':''}" data-c="__all">All</button>`+Object.keys(CATS).map(c=>{const on=!allOn&&catSel.has(c);return`<button class="chip ${on?'on':''}" style="${on?'background:var('+CATS[c]+')':''}" data-c="${c}">${c}</button>`}).join('');
+ document.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const c=b.dataset.c,all=Object.keys(CATS);if(c==='__all'||(catSel.size===1&&catSel.has(c)))catSel=new Set(all);else if(catSel.size===all.length)catSel=new Set([c]);else{catSel.has(c)?catSel.delete(c):catSel.add(c)}render()});
+ const{rows,days}=data(),I=rows.reduce((a,o)=>a+o.indent,0),P=rows.reduce((a,o)=>a+o.prod,0);
+ const ex=rows.filter(o=>o.df>0).reduce((a,o)=>a+o.df,0),sh=rows.filter(o=>o.df<0).reduce((a,o)=>a+o.df,0);
+ $('#kpis').innerHTML=`<div class="card k hero"><b>${I?Math.round(P/I*100):0}%</b><span>TR vs indent</span></div><div class="card k"><b>${n(I)}</b><span>Indent (kg)</span></div><div class="card k"><b>${n(P)}</b><span>TR qty (kg)</span></div><div class="card k"><b class="pos">${sg(ex)}</b><span>Total excess</span></div><div class="card k"><b class="neg">${sg(sh)}</b><span>Total short</span></div>`;
+ $('#cats').innerHTML=Object.keys(CATS).filter(c=>catSel.has(c)).map(c=>{const r=rows.filter(o=>o.s.cat===c),i=r.reduce((a,o)=>a+o.indent,0),p=r.reduce((a,o)=>a+o.prod,0),v=p-i;
+  return`<div class="card cat" style="--c:var(${CATS[c]})"><h3>${c}<span class="mu">${r.length} SKU</span></h3><div class="row"><span>Indent</span><b>${n(i)}</b></div><div class="row"><span>TR qty</span><b>${n(p)}</b></div><div class="row"><span>${v>=0?'Excess':'Short'}</span><b class="${v>0?'pos':v<0?'neg':''}">${sg(v)}</b></div><div class="prog"><i style="width:${Math.min(100,i?p/i*100:0)}%"></i></div></div>`}).join('');
+ const ds=Object.keys(days).sort(),mx=Math.max(1,...ds.map(d=>Math.max(days[d].i,days[d].p))),w=Math.max(320,ds.length*64);
+ $('#chart').innerHTML=ds.length?`<svg width="${w}" height="190" role="img" aria-label="Daily indent versus production">${ds.map((d,k)=>{const x=k*64+10,a=days[d].i/mx*130,b=days[d].p/mx*130;return`<rect x="${x}" y="${150-a}" width="22" height="${a}" rx="3" fill="var(--mu)" opacity=".5"/><rect x="${x+26}" y="${150-b}" width="22" height="${b}" rx="3" fill="var(--ac)"/><text x="${x+24}" y="170" text-anchor="middle" font-size="10" fill="var(--mu)">${d.slice(5)}</text>`}).join('')}</svg><div class="mu" style="font-size:12px">Grey: indent &nbsp; Green: TR qty</div>`:'<div class="empty">No entries in this date range.</div>';
+ rows.sort((a,b)=>Math.abs(b.df)-Math.abs(a.df));
+ $('#rows').innerHTML=rows.length?rows.map(o=>`<tr><td>${esc(o.s.name)}</td><td><i style="color:var(${CATS[o.s.cat]});font-style:normal">●</i> ${o.s.cat}</td><td class="mu">${esc(ulabel(o.s))}</td><td>${n(o.indent)} ${base(o.s)}${o.s.uom==='pcs'?`<br><small class="mu">${n(o.ie)} pcs</small>`:''}</td><td>${n(o.prod)} ${base(o.s)}${o.s.uom==='pcs'?`<br><small class="mu">${n(o.pe)} pcs</small>`:''}</td><td class="${o.df>0?'pos':o.df<0?'neg':''}">${sg(o.df)}</td><td><span class="b ${o.st}">${o.st}</span></td><td>${can('edit')?`<button class="btn" data-q="${o.s.id}">Edit qty</button> <button class="btn d" data-qd="${o.s.id}">Delete</button>`:''}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">Add an indent or production entry, or switch SKUs on in Admin control.</td></tr>';
+ renderTrend();renderAdmin();renderUsers()}
+function renderAdmin(){const q=$('#q').value.toLowerCase(),c=$('#cf').value,l=S.skus.filter(s=>(!c||s.cat===c)&&s.name.toLowerCase().includes(q));
+ $('#sklist').innerHTML=l.length?l.map(s=>`<div class="sk"><div><i style="color:var(${CATS[s.cat]});font-style:normal">●</i> ${esc(s.name)} <span class="mu">· ${s.cat} · ${esc(ulabel(s))}</span></div><div><label class="tg"><input type="checkbox" data-id="${s.id}" ${s.on?'checked':''} aria-label="Show ${esc(s.name)}"><s></s></label> <button class="btn" data-ed="${s.id}">Edit</button> <button class="btn d" data-del="${s.id}">Remove</button></div></div>`).join(''):'<div class="empty">No SKUs yet. Add one or import the template.</div>';
+ $('#sklist').querySelectorAll('[data-id]').forEach(e=>e.onchange=()=>{S.skus.find(s=>s.id===e.dataset.id).on=e.checked;save();render()});
+ $('#sklist').querySelectorAll('[data-del]').forEach(e=>e.onclick=()=>{S.skus=S.skus.filter(s=>s.id!==e.dataset.del);save();render()})}
+['q','cf'].forEach(i=>$('#'+i).oninput=renderAdmin);$('#from').onchange=$('#to').onchange=render;
+$('#allOn').onclick=()=>{S.skus.forEach(s=>s.on=true);save();render()};$('#allOff').onclick=()=>{S.skus.forEach(s=>s.on=false);save();render()};
+$('#addSku').onclick=()=>{if(addSku($('#nn').value,$('#nc').value,$('#nu').value,$('#ns').value,$('#np').value)){$('#nn').value=$('#ns').value='';save();render();toast('SKU added')}else toast('Check name and pack size')};
+$('#clr').onclick=()=>{if(confirm('Delete all SKUs and entries?')){S={skus:[],recs:{},users:S.users};save();render()}};
+
+// ---- CSV helpers
+function parseCSV(t){const out=[];let r=[],c='',q=false;for(let i=0;i<t.length;i++){const ch=t[i];if(q){if(ch==='"'&&t[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else if(ch==='"')q=true;else if(ch===','){r.push(c);c=''}else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);c='';if(r.some(x=>x.trim()))out.push(r);r=[]}else c+=ch}
+ r.push(c);if(r.some(x=>x.trim()))out.push(r);return out}
+const q2=v=>'"'+String(v).replace(/"/g,'""')+'"';
+function fileOut(name,data,type){const b=data instanceof Blob?data:new Blob([data],{type:type||'application/octet-stream'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast('File downloaded')}
+async function dl(name,csv){fileOut(name,'\ufeff'+csv,'text/csv')}
+async function tpl(name,rows,notes){if(window.ExcelJS){const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Data'),bd={style:'thin',color:{argb:'FF000000'}};rows.forEach((r,i)=>{const row=ws.addRow(r);row.eachCell({includeEmpty:true},c=>{c.border={top:bd,left:bd,bottom:bd,right:bd};c.font={bold:i===0,color:{argb:'FF000000'}};if(i===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}}})});ws.columns.forEach(c=>c.width=22);if(notes){const n=wb.addWorksheet("Instructions");notes.forEach(t=>n.addRow([t]));n.getColumn(1).width=100}saveFile(name+'.xlsx',await wb.xlsx.writeBuffer())}else dl(name+'.csv',rows.map(r=>r.map(q2).join(',')).join('\n'))}
+
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;const rows=parseCSV(await f.text()),h=rows.shift().map(x=>x.trim().toLowerCase());
+ const ix=k=>h.findIndex(x=>x.replace(/\s/g,'')===k);const a=ix('prodname'),b=ix('uom'),c=ix('packsize'),d=ix('packunit'),g=ix('prodtype')>=0?ix('prodtype'):ix('category');
+ if(a<0||b<0||g<0){toast('Headers do not match the template');return}let ok=0,bad=0;
+ rows.forEach(r=>addSku(r[a],r[g],r[b],c>=0?r[c]:0,d>=0?r[d]:'g')?ok++:bad++);e.target.value='';save();render();toast(ok+' added'+(bad?', '+bad+' skipped':''))};
+
+// ---- entry dialogs
+function opd(dlg,p){const on=S.skus.filter(s=>s.on);$(p+'S').innerHTML=on.length?on.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">Switch a SKU on first</option>';$(p+'D').value=today;$(p+'Q').value='';$(p+'S').selectedIndex=-1;$(p+'Find').value='';$(p+'List').classList.add('hide');prev(p);dlg.showModal()}
+function prev(p){const s=S.skus.find(x=>x.id===$(p+'S').value);if(!s){$(p+'L').textContent='Qty';$(p+'V').textContent='';return}
+ $(p+'L').textContent='Qty in '+(s.uom==='pcs'?'pcs':s.uom);const v=+$(p+'Q').value||0;$(p+'V').textContent=s.uom==='pcs'?`${v} pcs × ${s.size} ${s.pu} = ${n(v*factor(s))} ${base(s)}`:''}
+['i','p'].forEach(k=>{$('#'+k+'S').onchange=$('#'+k+'Q').oninput=()=>prev('#'+k)});
+$('#bIndent').onclick=()=>opd($('#dI'),'#i');$('#bProd').onclick=()=>opd($('#dP'),'#p');
+document.querySelectorAll('[data-x]').forEach(b=>b.onclick=e=>{e.preventDefault();b.closest('dialog').close()});
+function ok(p,dlg,field,msg){const s=$(p+'S').value,d=$(p+'D').value;if(!s||!d||$(p+'Q').value==='')return toast('Fill all fields');upsert(d,s,{[field]:+$(p+'Q').value});dlg.close();save();render();toast(msg)}
+$('#iOk').onclick=()=>ok('#i',$('#dI'),'indent','Indent saved');$('#pOk').onclick=()=>ok('#p',$('#dP'),'prod','Production saved');
+
+const nd=s=>{const p=String(s||'').trim().replaceAll('/','-').replaceAll('.','-').split('-');if(p.length!==3)return'';const[y,m,d]=p[0].length===4?p:[p[2],p[1],p[0]];return y.length===4&&+m>0&&+m<13&&+d>0&&+d<32?`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`:''};
+function nn(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').replaceAll('\u2013','-').replaceAll('\u2014','-').trim()}
+function findSku(nm){const k=nn(nm);return S.skus.find(s=>nn(s.name)===k)}
+function heal(){const seen={},map={};S.skus=S.skus.filter(s=>{const k=nn(s.name);if(seen[k]){map[s.id]=seen[k];return false}seen[k]=s.id;return true});
+ if(Object.keys(map).length){const R={};Object.values(S.recs).forEach(r=>{const sk=map[r.sku]||r.sku,key=r.date+'|'+sk;if(R[key]){R[key].indent+=r.indent;R[key].prod+=r.prod}else R[key]=Object.assign({},r,{sku:sk})});S.recs=R;save()}}
+function bulkUp(p,head,key,field,dlg){
+ $(p+'T').onclick=()=>tpl(head.replaceAll(' ','_')+'_upload_template',[p==='#i'?['Date','Item Name','Quantity Transferred','Usage unit']:['Date','Prod Name',head]],['Fill from row 2, under the headers.','Date: 15-10-2026 or 2026-10-15.','Prod Name: must match the SKU name in Admin control.','Quantity: in the SKU usage unit, or write the Usage unit column (Pcs, kg or ltr). If the unit is kg and the SKU is a pcs item, it is converted using the pack size.','If an item and date appear many times in the file, the quantities are added together.','Uploading again for the same date and SKU replaces the old value.']);
+ $(p+'F').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';let rows;try{rows=await readRows(f)}catch(x){return toast('Could not read the file')}
+  const h=(rows.shift()||[]).map(x=>String(x).replace('\ufeff','').trim().toLowerCase().replaceAll(' ','')),a=h.indexOf('date'),b=['itemname','prodname','productname'].map(k=>h.indexOf(k)).find(i=>i>=0)??-1,c=[key,'quantitytransferred','indentqty','trqty','productionqty','production','qty','quantity'].map(k=>h.indexOf(k)).find(i=>i>=0)??-1,u=h.indexOf('usageunit');
+  if(a<0||b<0||c<0){toast('Headers do not match the template');return}
+  const tot={},bad=[];let n=0;rows.forEach(r=>{const nm=String(r[b]||'').trim();if(!nm&&!String(r[c]||'').trim())return;const d=nd(r[a]),s=findSku(nm);let v=parseFloat(String(r[c]).replaceAll(',',''));if(d&&s&&!isNaN(v)){const fu=u>=0?UU[String(r[u]||'').trim().toLowerCase()]||'':'';let ok2=true;if(fu&&fu!==s.uom){if(s.uom==='pcs'&&factor(s)>0&&((fu==='kg'&&base(s)==='kg')||(fu==='ltr'&&base(s)==='L')))v=v/factor(s);else ok2=false}if(ok2){const k=d+'|'+s.id;tot[k]=Math.round(((tot[k]||0)+v)*1e6)/1e6;n++}else bad.push(nm+' (unit '+fu+')')}else bad.push(nm||'(blank name)')});
+  Object.keys(tot).forEach(k=>{const[d,id]=k.split('|');upsert(d,id,{[field]:tot[k]})});
+  dlg.close();save();render();toast(n+' rows loaded'+(bad.length?', '+bad.length+' not matched: '+bad.slice(0,2).join(', '):''))}}
+bulkUp('#i','Indent Qty','indentqty','indent',$('#dI'));bulkUp('#p','TR Qty','trqty','prod',$('#dP'));
+
+function line(ds,sers,zero){if(!ds.length)return'<div class="empty">No entries in this date range.</div>';
+ const all=sers.flatMap(s=>s.v),mx=Math.max(1,...all),mn=zero?Math.min(0,...all):0,w=Math.max(340,ds.length*56),L=46,H=170,R=mx-mn||1,X=i=>L+(ds.length>1?i*(w-L-16)/(ds.length-1):(w-L-16)/2),Y=v=>10+(mx-v)/R*H;
+ let g=`<line x1="${L}" x2="${w}" y1="${Y(mn)}" y2="${Y(mn)}" stroke="var(--ln)"/><text x="${L-6}" y="${Y(mx)+4}" text-anchor="end" font-size="10" fill="var(--mu)">${n(mx)}</text><text x="${L-6}" y="${Y(mn)+4}" text-anchor="end" font-size="10" fill="var(--mu)">${n(mn)}</text>`;
+ if(zero)g+=`<line x1="${L}" x2="${w}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--mu)" stroke-dasharray="4 3"/><text x="${L-6}" y="${Y(0)+4}" text-anchor="end" font-size="10" fill="var(--mu)">0</text>`;
+ sers.forEach(s=>{g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" points="${s.v.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`+s.v.map((v,i)=>`<circle cx="${X(i)}" cy="${Y(v)}" r="3.5" fill="${zero?(v>0?'var(--ex)':v<0?'var(--sh)':'var(--ok)'):s.c}"><title>${ds[i]}: ${n(v)}</title></circle>`).join('')});
+ g+=ds.map((d,i)=>`<text x="${X(i)}" y="${H+30}" text-anchor="middle" font-size="10" fill="var(--mu)">${d.slice(5)}</text>`).join('');
+ return`<svg width="${w}" height="${H+40}" role="img" aria-label="Trend">${g}</svg><div class="mu" style="font-size:12px">${sers.map(s=>`<b style="color:${s.c}">●</b> ${s.n}`).join(' &nbsp; ')}${zero?' &nbsp; Above the dashed line is excess, below is short':''}</div>`}
+function renderTrend(){const sel=$('#tsel'),cur=sel.value,on=S.skus.filter(s=>s.on&&catSel.has(s.cat));
+ sel.innerHTML='<option value="">All SKUs</option>'+on.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');sel.value=on.some(s=>s.id===cur)?cur:'';
+ const{days}=data(sel.value),ds=Object.keys(days).sort();
+ $('#t1').innerHTML=line(ds,[{n:'Indent',c:'#2b7bd6',v:ds.map(d=>days[d].i)},{n:'TR qty',c:'var(--ac)',v:ds.map(d=>days[d].p)}],false);
+ $('#t2').innerHTML=line(ds,[{n:'TR − Indent',c:'var(--ex)',v:ds.map(d=>days[d].p-days[d].i)}],true)}
+$('#tsel').onchange=renderTrend;
+
+async function readRows(f){if(f.name.toLowerCase().endsWith('.xlsx')){const wb=new ExcelJS.Workbook();await wb.xlsx.load(await f.arrayBuffer());const ws=wb.worksheets[0],out=[];ws.eachRow({includeEmpty:false},r=>{const a=[];for(let i=1;i<=r.cellCount;i++){const c=r.getCell(i).value;a.push(c==null?'':c instanceof Date?c.toISOString().slice(0,10):typeof c==='object'?String(c.text||c.result||''):String(c))}out.push(a)});return out}
+ const t=await f.text();return(t.split('\n')[0]||'').includes('\t')?t.split('\n').map(l=>l.replace('\r','').split('\t')).filter(r=>r.some(x=>x.trim())):parseCSV(t)}
+const UU={pcs:'pcs',pc:'pcs',pkt:'pcs',packet:'pcs',packets:'pcs',nos:'pcs',unit:'pcs',units:'pcs',kg:'kg',kgs:'kg',ltr:'ltr',l:'ltr',lt:'ltr',litre:'ltr',liter:'ltr'};
+const MU={g:'g',gm:'g',gms:'g',gram:'g',grams:'g',gr:'g',kg:'kg',kgs:'kg',ml:'ml',mls:'ml',l:'ltr',lt:'ltr',ltr:'ltr',litre:'ltr',liter:'ltr'};
+function meas(v){v=String(v||'').trim().toLowerCase().replaceAll(' ','');let i=0;while(i<v.length&&'0123456789.'.includes(v[i]))i++;return{sz:parseFloat(v.slice(0,i)),u:MU[v.slice(i)]||''}}
+$('#tpl').onclick=()=>tpl('SKU_import_template',[['Prod Name','Usage unit','Usage Measurements','Prod Format']],['Fill from row 2, under the headers.','Usage unit: pcs, kg or ltr.','Usage Measurements: only for pcs. Write the size of ONE piece with its unit, such as 240 ml or 250 g.','Prod Format: Fresh, Ambient, Chiller or BP.','A name that already exists is updated, and its entries are kept.']);
+$('#bk').onclick=()=>fileOut('production-backup-'+today+'.json',JSON.stringify(S),'application/json');
+$('#ulist').addEventListener('change',e=>{const t=e.target;if(t.dataset.p){const u=S.users.find(x=>x.id===t.dataset.u);if(u){u.perms=u.perms||{};u.perms[t.dataset.p]=t.checked;save()}}});
+$('#ulist').addEventListener('click',async e=>{const r=e.target.closest('[data-ur]'),d=e.target.closest('[data-ud]');
+ if(r){const p=prompt('New password for '+r.dataset.ur);if(p&&p.trim().length>=4){const u=S.users.find(x=>x.id===r.dataset.ur);u.h=await hash(u.id+':'+p.trim());save();toast('Password changed')}}
+ if(d&&confirm('Remove user '+d.dataset.ud+'?')){S.users=S.users.filter(x=>x.id!==d.dataset.ud);save();renderUsers()}});
+$('#addUser').onclick=async()=>{const id=$('#uId').value.trim().toLowerCase(),pw=$('#uPw').value.trim();if(!id||pw.length<4)return toast('Enter a user ID and a password of 4 or more characters');if(id==='zakari9946@gmail.com'||S.users.some(x=>x.id===id))return toast('That user ID already exists');const perms={};document.querySelectorAll('#uPerm input').forEach(c=>perms[c.dataset.p]=c.checked);S.users.push({id,h:await hash(id+':'+pw),perms});$('#uId').value=$('#uPw').value='';save();renderUsers();toast('User added')};
+function mkSearch(p){const sel=$('#'+p+'S'),inp=document.createElement('input'),box=document.createElement('div');inp.id=p+'Find';inp.placeholder='Type to search prod name';inp.autocomplete='off';box.id=p+'List';box.style.cssText='max-height:180px;overflow:auto;border:1px solid var(--ln);border-radius:8px;margin-top:4px';box.classList.add('hide');sel.before(inp);sel.after(box);sel.classList.add('hide');
+ const draw=()=>{const q=nn(inp.value),l=[...sel.options].filter(o=>o.value&&(!q||nn(o.textContent).includes(q)));box.innerHTML=l.length?l.map(o=>`<div role="option" data-v="${o.value}" style="padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--ln)">${esc(o.textContent)}</div>`).join(''):'<div class="mu" style="padding:8px 10px">No match</div>';box.classList.remove('hide')};
+ inp.oninput=()=>{sel.selectedIndex=-1;sel.dispatchEvent(new Event('change'));draw()};inp.onfocus=draw;
+ box.onclick=e=>{const d=e.target.closest('[data-v]');if(!d)return;sel.value=d.dataset.v;inp.value=d.textContent;box.classList.add('hide');sel.dispatchEvent(new Event('change'))}}
+['i','p','m'].forEach(mkSearch);
+function prevM(){const s=S.skus.find(x=>x.id===$('#mS').value);$('#mC').value=s?s.cat:'';const u=s?s.uom:'';$('#mIl').textContent='Indent'+(u?' ('+u+')':'');$('#mPl').textContent='Production'+(u?' ('+u+')':'');
+ const f=v=>s&&s.uom==='pcs'&&+v>0?`${v} pcs \u00d7 ${s.size} ${s.pu} = ${n(v*factor(s))} ${base(s)}`:'';$('#mV').textContent=[f($('#mI').value),f($('#mP').value)].filter(Boolean).join('  |  ')}
+$('#bMan').onclick=()=>{const on=S.skus.filter(s=>s.on);$('#mS').innerHTML=on.length?on.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">Switch a SKU on first</option>';$('#mD').value=today;$('#mI').value=$('#mP').value='';$('#mS').selectedIndex=-1;$('#mFind').value='';$('#mList').classList.add('hide');prevM();$('#dM').showModal()};
+['mS','mI','mP'].forEach(x=>{$('#'+x).oninput=$('#'+x).onchange=prevM});
+$('#mOk').onclick=()=>{const s=$('#mS').value,d=$('#mD').value,i=$('#mI').value,p=$('#mP').value;if(!s||!d)return toast('Pick date and prod name');if(i===''&&p==='')return toast('Enter indent or production');const f={};if(i!=='')f.indent=+i;if(p!=='')f.prod=+p;upsert(d,s,f);$('#dM').close();save();render();toast('Entry saved')};
+let editId=null;
+function editSku(id){const s=S.skus.find(x=>x.id===id);if(!s)return;editId=id;$('#eN').value=s.name;$('#eC').value=s.cat;$('#eU').value=s.uom;$('#eS').value=s.size||'';$('#eP').value=s.pu||'g';$('#eW').classList.toggle('hide',s.uom!=='pcs');$('#dE').showModal()}
+$('#eU').onchange=()=>$('#eW').classList.toggle('hide',$('#eU').value!=='pcs');
+$('#sklist').addEventListener('click',e=>{const b=e.target.closest('[data-ed]');if(b)editSku(b.dataset.ed)});
+$('#eOk').onclick=()=>{const s=S.skus.find(x=>x.id===editId),nm=$('#eN').value.trim(),u=$('#eU').value,z=+$('#eS').value;if(!s||!nm)return toast('Enter a name');if(u==='pcs'&&!(z>0))return toast('Enter the measurement of one piece');s.name=nm;s.cat=$('#eC').value;s.uom=u;s.size=u==='pcs'?z:0;s.pu=u==='pcs'?$('#eP').value:'g';$('#dE').close();save();render();toast('SKU updated')};
+let qId=null,qRows=[];
+function drawQ(){$('#qB').innerHTML=qRows.length?qRows.map((r,k)=>`<tr><td><input type="date" value="${r.d}" data-k="${k}" data-f="d"></td><td><input type="number" step="any" min="0" value="${r.i}" data-k="${k}" data-f="i"></td><td><input type="number" step="any" min="0" value="${r.p}" data-k="${k}" data-f="p"></td><td><button class="btn d" data-qx="${k}" aria-label="Delete row">\u2715</button></td></tr>`).join(''):'<tr><td colspan="4" class="empty">No entries in this date range.</td></tr>'}
+function openQ(id){const s=S.skus.find(x=>x.id===id);if(!s)return;qId=id;const a=$('#from').value,b=$('#to').value;
+ qRows=Object.values(S.recs).filter(r=>r.sku===id&&r.date>=a&&r.date<=b).sort((x,y)=>x.date.localeCompare(y.date)).map(r=>({d:r.date,i:r.indent,p:r.prod}));
+ $('#qT').textContent=s.name+' | quantities in '+(s.uom==='pcs'?'pcs':s.uom)+' | dates '+a+' to '+b;drawQ();$('#dQ').showModal()}
+$('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(b)openQ(b.dataset.q)});
+$('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-qd]');if(!b)return;const id=b.dataset.qd,s=S.skus.find(x=>x.id===id),a=$('#from').value,t=$('#to').value;if(!s)return;const ks=Object.keys(S.recs).filter(k=>{const r=S.recs[k];return r.sku===id&&r.date>=a&&r.date<=t});if(!confirm('Delete '+ks.length+' entries of '+s.name+' from '+a+' to '+t+'? Both indent and TR qty will be removed.'))return;ks.forEach(k=>delete S.recs[k]);save();render();toast('Entries deleted')});
+$('#qB').addEventListener('input',e=>{const t=e.target;if(t.dataset.k!==undefined)qRows[+t.dataset.k][t.dataset.f]=t.value});
+$('#qB').addEventListener('click',e=>{const b=e.target.closest('[data-qx]');if(b){qRows.splice(+b.dataset.qx,1);drawQ()}});
+$('#qA').onclick=()=>{qRows.push({d:today,i:0,p:0});drawQ()};
+$('#qOk').onclick=()=>{const a=$('#from').value,b=$('#to').value;Object.keys(S.recs).forEach(k=>{const r=S.recs[k];if(r.sku===qId&&r.date>=a&&r.date<=b)delete S.recs[k]});
+ qRows.forEach(r=>{if(r.d)upsert(r.d,qId,{indent:+r.i||0,prod:+r.p||0})});$('#dQ').close();save();render();toast('Quantities updated')};
+document.querySelectorAll('#dash .card,#admin .card').forEach(c=>{const f=c.firstElementChild;if(!f)return;const hd=f.tagName==='H2'?f:f.querySelector('h2');if(!hd)return;
+ const btn=document.createElement('button');btn.className='btn tgl2';btn.textContent='\u2212';btn.setAttribute('aria-label','Hide or show this section');btn.setAttribute('aria-expanded','true');
+ if(f.tagName==='H2')f.style.cssText='display:flex;justify-content:space-between;align-items:center';f.appendChild(btn);
+ btn.onclick=()=>{const open=btn.getAttribute('aria-expanded')==='true';[...c.children].forEach(x=>{if(x!==f)x.classList.toggle('hide',open)});btn.setAttribute('aria-expanded',String(!open));btn.textContent=open?'+':'\u2212'}});
+$('#rs').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';try{const o=JSON.parse(await f.text());if(!Array.isArray(o.skus)||typeof o.recs!=='object')throw 0;if(!confirm('Replace current data with this backup?'))return;o.users=o.users||S.users||[];S=o;save();render();toast('Backup restored')}catch(x){toast('Not a valid backup file')}};
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';let rows;try{rows=await readRows(f)}catch(x){return toast('Could not read the file')}
+ const h=(rows.shift()||[]).map(x=>String(x).trim().toLowerCase().replaceAll(' ','')),ix=(...k)=>h.findIndex(x=>k.includes(x));
+ const a=ix('prodname'),b=ix('usageunit','uom'),c=ix('usagemeasurements','usagemeasurement','packsize'),d=ix('packunit'),g=ix('prodformat','prodtype','category');
+ if(a<0||b<0||g<0)return toast('Headers do not match the template');
+ let ok=0;const bad=[];rows.forEach(r=>{const nm=String(r[a]||'').trim();if(!nm)return;const uom=UU[String(r[b]||'').trim().toLowerCase()]||'';let sz=0,pu='g';
+  if(uom==='pcs'){const m=meas(c>=0?r[c]:'');sz=m.sz;pu=m.u||(d>=0?MU[String(r[d]||'').trim().toLowerCase()]:'')||''}
+  const old=S.skus.findIndex(s=>nn(s.name)===nn(nm)),keep=old>=0?S.skus.splice(old,1)[0]:null;
+  if(uom&&addSku(nm,r[g],uom,sz,pu||'g')){if(keep){const z2=S.skus[S.skus.length-1];z2.on=keep.on;z2.id=keep.id}ok++}else{if(keep)S.skus.push(keep);bad.push(nm)}});
+ save();render();toast(ok+' SKUs imported'+(bad.length?', '+bad.length+' skipped: '+bad.slice(0,2).join(', '):''))};
+
+function report(kind){const f=$('#from').value,t=$('#to').value,sk=Object.fromEntries(S.skus.filter(s=>s.on&&catSel.has(s.cat)).map(s=>[s.id,s]));
+ const rs=Object.values(S.recs).filter(r=>r.date>=f&&r.date<=t&&sk[r.sku]).sort((a,b)=>a.date.localeCompare(b.date));if(!rs.length)return toast('No data in this range');
+ const csv='Date,Category,SKU,Entry Unit,Indent Entered,TR Entered,Indent (kg/L),TR (kg/L),Difference,Status\n'+rs.map(r=>{const s=sk[r.sku],k=factor(s),i=r.indent*k,p=r.prod*k,d=p-i;return[r.date,s.cat,q2(s.name),q2(ulabel(s)),r.indent,r.prod,+i.toFixed(3),+p.toFixed(3),+d.toFixed(3),Math.abs(d)<1e-6?'OK':d>0?'Excess':'Short'].join(',')}).join('\n');
+ const nm='production-report-'+f+'-to-'+t;if(kind==='csv')dl(nm+'.csv',csv);else exportFile(kind,nm,parseCSV(csv),f,t)}
+$('#bDl').onclick=()=>$('#dR').showModal();
+$('#dR').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{$('#dR').close();report(b.dataset.k)});
+async function saveFile(name,data){fileOut(name,new Blob([data]),name.endsWith('.pdf')?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
+async function exportFile(kind,nm,rows,f,t){const head=rows.shift();
+ if(kind==='xlsx'){const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Report'),bd={style:'thin',color:{argb:'FF000000'}},B={top:bd,left:bd,bottom:bd,right:bd};
+  ws.addRow(['Indent vs TR report',f+' to '+t]).font={bold:true,size:12,color:{argb:'FF000000'}};ws.addRow([]);
+  [head,...rows].forEach((r,i)=>{const row=ws.addRow(r.map((v,j)=>j>=4&&j<=8?+v:v));row.eachCell(c=>{c.border=B;c.font={name:'Calibri',size:11,bold:i===0,color:{argb:'FF000000'}};if(i===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}}})});
+  ws.columns.forEach(c=>c.width=16);ws.getColumn(3).width=26;saveFile(nm+'.xlsx',await wb.xlsx.writeBuffer())}
+ else{const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});doc.setTextColor(0);doc.setFontSize(13);doc.text('Indent vs TR report: '+f+' to '+t,14,14);
+  doc.autoTable({head:[head],body:rows,startY:20,theme:'grid',styles:{fontSize:8,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:.2},headStyles:{fillColor:[217,217,217],textColor:[0,0,0],fontStyle:'bold',lineColor:[0,0,0],lineWidth:.2},bodyStyles:{textColor:[0,0,0]}});
+  saveFile(nm+'.pdf',doc.output('arraybuffer'))}}
+</script></body></html>
