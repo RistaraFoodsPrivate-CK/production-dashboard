@@ -109,7 +109,7 @@ dialog::backdrop{background:#0008}dialog label{display:block;margin:10px 0 3px;f
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <dialog id="dE"><h2>Edit SKU</h2><label>Prod name</label><input id="eN"><label>Prod format</label><select id="eC"><option>Fresh</option><option>Ambient</option><option>Chilled</option><option>BP</option></select><label>Usage unit</label><select id="eU"><option>pcs</option><option>kg</option><option>ltr</option></select><div id="eW"><label>Measurement of one piece</label><div class="bar" style="margin:0"><input id="eS" type="number" min="0" step="any" style="width:50%"><select id="eP" style="width:40%"><option>g</option><option>kg</option><option>ml</option><option>ltr</option><option>pcs</option></select></div></div><div class="bar" style="margin:14px 0 0"><button class="btn p" id="eOk">Save changes</button><button class="btn" data-x>Cancel</button></div></dialog>
 <dialog id="dQ" style="width:min(520px,94vw)"><h2>Edit quantities</h2><div class="mu" id="qT" style="margin-bottom:8px"></div><div style="max-height:50vh;overflow:auto"><table style="min-width:0"><thead><tr><th>Date</th><th>Indent</th><th>TR qty</th><th></th></tr></thead><tbody id="qB"></tbody></table></div><div class="bar" style="margin:12px 0 0"><button class="btn" id="qA">+ Add date</button></div><div class="bar" style="margin:6px 0 0"><button class="btn p" id="qOk">Save changes</button><button class="btn" data-x>Cancel</button></div></dialog>
-<dialog id="dM"><h2>Manual entry</h2><label>Date</label><input type="date" id="mD"><label>Prod name</label><select id="mS"></select><label id="mIl">Indent</label><input type="number" min="0" step="any" id="mI"><label id="mPl">Production</label><input type="number" min="0" step="any" id="mP"><div id="mV" class="mu" style="margin-top:6px"></div><label>Prod type</label><input id="mC" readonly><div class="bar" style="margin:14px 0 0"><button class="btn p" id="mOk">Save entry</button><button class="btn" data-x>Cancel</button></div></dialog>
+<dialog id="dM"><h2>Manual entry</h2><label>Date</label><input type="date" id="mD"><label>Prod name</label><select id="mS"></select><label id="mIl">Indent</label><input type="number" min="0" step="any" id="mI"><label id="mPl">Production</label><input type="number" min="0" step="any" id="mP"><div id="mV" class="mu" style="margin-top:6px"></div><label>Prod type</label><input id="mC" readonly><label>Remarks (optional, shown only in downloaded PDF / Excel report)</label><input id="mR" maxlength="300" placeholder="Type remarks" autocomplete="off"><div class="bar" style="margin:14px 0 0"><button class="btn p" id="mOk">Save entry</button><button class="btn" data-x>Cancel</button></div></dialog>
 <div id="toast"></div>
 
 <script>
@@ -191,11 +191,12 @@ function addSku(name,cat,uom,size,pu){name=(name||'').trim();let cl=String(cat).
  if(uom==='l'||uom==='litre'||uom==='liter')uom='ltr';if(pu==='l'||pu==='litre'||pu==='liter')pu='ltr';
  if(!name||S.skus.some(s=>nn(s.name)===nn(name))||!cat||!['pcs','kg','ltr'].includes(uom)||!['g','kg','ml','ltr','pcs'].includes(pu)||(uom==='pcs'&&pu!=='pcs'&&!(+size>0)))return false;
  S.skus.push({id:'s'+Date.now()+Math.random().toString(36).slice(2,6),name,cat,uom,size:uom==='pcs'?(+size>0?+size:1):0,pu,on:true});return true}
-function upsert(date,sku,f){const k=date+'|'+sku;S.recs[k]=Object.assign({date,sku,indent:0,prod:0},S.recs[k],f)}
+let tsc=0;const nowTs=()=>(tsc=Math.max(Date.now(),tsc+1));
+function upsert(date,sku,f){const k=date+'|'+sku;S.recs[k]=Object.assign({date,sku,indent:0,prod:0},S.recs[k],{ts:nowTs()},f)}
 
 function data(only){const f=$('#from').value,t=$('#to').value,m={},days={};
  S.skus.filter(s=>s.on&&catSel.has(s.cat)&&(!only||s.id===only)).forEach(s=>m[s.id]={s,indent:0,prod:0});
- Object.values(S.recs).forEach(r=>{const o=m[r.sku];if(!o||r.date<f||r.date>t)return;const k=factor(o.s),i=r.indent*k,p=r.prod*k;o.indent+=i;o.prod+=p;o.ie=(o.ie||0)+r.indent;o.pe=(o.pe||0)+r.prod;if(only||base(o.s)!=='pcs'){const d=days[r.date]=days[r.date]||{i:0,p:0};d.i+=i;d.p+=p}});
+ Object.values(S.recs).forEach(r=>{const o=m[r.sku];if(!o||r.date<f||r.date>t)return;const k=factor(o.s),i=r.indent*k,p=r.prod*k;o.indent+=i;o.prod+=p;o.ts=Math.max(o.ts||0,r.ts||0);o.ie=(o.ie||0)+r.indent;o.pe=(o.pe||0)+r.prod;if(only||base(o.s)!=='pcs'){const d=days[r.date]=days[r.date]||{i:0,p:0};d.i+=i;d.p+=p}});
  const rows=Object.values(m).filter(o=>o.indent||o.prod).map(o=>{o.df=o.prod-o.indent;o.st=Math.abs(o.df)<1e-6?'OK':o.df>0?'Excess':'Short';return o});return{rows,days}}
 
 function render(){
@@ -209,7 +210,7 @@ function render(){
   return`<div class="card cat" style="--c:var(${CATS[c]})"><h3>${c}<span class="mu">${r.length} SKU</span></h3><div class="row"><span>Indent</span><b>${n(i)}</b></div><div class="row"><span>TR qty</span><b>${n(p)}</b></div><div class="row"><span>${v>=0?'Excess':'Short'}</span><b class="${v>0?'pos':v<0?'neg':''}">${sg(v)}</b></div><div class="prog"><i style="width:${Math.min(100,i?p/i*100:0)}%"></i></div></div>`}).join('');
  const ds=Object.keys(days).sort(),mx=Math.max(1,...ds.map(d=>Math.max(days[d].i,days[d].p))),w=Math.max(320,ds.length*64);
  $('#chart').innerHTML=ds.length?`<svg width="${w}" height="190" role="img" aria-label="Daily indent versus production">${ds.map((d,k)=>{const x=k*64+10,a=days[d].i/mx*130,b=days[d].p/mx*130;return`<rect x="${x}" y="${150-a}" width="22" height="${a}" rx="3" fill="var(--mu)" opacity=".5"/><rect x="${x+26}" y="${150-b}" width="22" height="${b}" rx="3" fill="var(--ac)"/><text x="${x+24}" y="170" text-anchor="middle" font-size="10" fill="var(--mu)">${d.slice(5)}</text>`}).join('')}</svg><div class="mu" style="font-size:12px">Grey: indent &nbsp; Green: TR qty</div>`:'<div class="empty">No entries in this date range.</div>';
- rows.sort((a,b)=>Math.abs(b.df)-Math.abs(a.df));
+ rows.sort((a,b)=>(b.ts||0)-(a.ts||0)||Math.abs(b.df)-Math.abs(a.df));
  $('#rows').innerHTML=rows.length?rows.map(o=>`<tr><td>${esc(o.s.name)}</td><td><i style="color:var(${CATS[o.s.cat]});font-style:normal">●</i> ${o.s.cat}</td><td class="mu">${esc(ulabel(o.s))}</td><td>${n(o.indent)} ${base(o.s)}${o.s.uom==='pcs'&&base(o.s)!=='pcs'?`<br><small class="mu">${n(o.ie)} pcs</small>`:''}</td><td>${n(o.prod)} ${base(o.s)}${o.s.uom==='pcs'&&base(o.s)!=='pcs'?`<br><small class="mu">${n(o.pe)} pcs</small>`:''}</td><td class="${o.df>0?'pos':o.df<0?'neg':''}">${sg(o.df)}</td><td><span class="b ${o.st}">${o.st}</span></td><td>${can('edit')?`<button class="btn" data-q="${o.s.id}">Edit qty</button>`:''} ${can('del')?`<button class="btn d" data-qd="${o.s.id}">Delete</button>`:''}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">Add an indent or production entry, or switch SKUs on in Admin control.</td></tr>';
  renderTrend();renderAdmin();renderUsers()}
 function renderAdmin(){const q=$('#q').value.toLowerCase(),c=$('#cf').value,l=S.skus.filter(s=>(!c||s.cat===c)&&s.name.toLowerCase().includes(q));
@@ -248,7 +249,7 @@ const nd=s=>{const p=String(s||'').trim().replaceAll('/','-').replaceAll('.','-'
 function nn(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').replaceAll('\u2013','-').replaceAll('\u2014','-').trim()}
 function findSku(nm){const k=nn(nm);return S.skus.find(s=>nn(s.name)===k)}
 function heal(){const seen={},map={};S.skus=S.skus.filter(s=>{const k=nn(s.name);if(seen[k]){map[s.id]=seen[k];return false}seen[k]=s.id;return true});
- if(Object.keys(map).length){const R={};Object.values(S.recs).forEach(r=>{const sk=map[r.sku]||r.sku,key=r.date+'|'+sk;if(R[key]){R[key].indent+=r.indent;R[key].prod+=r.prod}else R[key]=Object.assign({},r,{sku:sk})});S.recs=R;save()}}
+ if(Object.keys(map).length){const R={};Object.values(S.recs).forEach(r=>{const sk=map[r.sku]||r.sku,key=r.date+'|'+sk;if(R[key]){R[key].indent+=r.indent;R[key].prod+=r.prod;R[key].ts=Math.max(R[key].ts||0,r.ts||0);if(r.rem)R[key].rem=(R[key].rem?R[key].rem+'; ':'')+r.rem}else R[key]=Object.assign({},r,{sku:sk})});S.recs=R;save()}}
 function bulkUp(p,head,key,field,dlg){
  $(p+'T').onclick=()=>tpl(head.replaceAll(' ','_')+'_upload_template',[p==='#i'?['Date','Item Name','Quantity Transferred','Usage unit']:['Date','Prod Name',head]],['Fill from row 2, under the headers.','Date: 15-10-2026 or 2026-10-15.','Prod Name: must match the SKU name in Admin control.','Quantity: in the SKU usage unit, or write the Usage unit column (Pcs, kg or ltr). If the unit is kg and the SKU is a pcs item, it is converted using the pack size.','If an item and date appear many times in the file, the quantities are added together.','Uploading again for the same date and SKU replaces the old value.']);
  $(p+'F').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.value='';let rows;try{rows=await readRows(f)}catch(x){return toast('Could not read the file')}
@@ -295,9 +296,9 @@ function mkSearch(p){const sel=$('#'+p+'S'),inp=document.createElement('input'),
 ['i','p','m'].forEach(mkSearch);
 function prevM(){const s=S.skus.find(x=>x.id===$('#mS').value);$('#mC').value=s?s.cat:'';const u=s?s.uom:'';$('#mIl').textContent='Indent'+(u?' ('+u+')':'');$('#mPl').textContent='Production'+(u?' ('+u+')':'');
  const f=v=>s&&s.uom==='pcs'&&!(base(s)==='pcs'&&factor(s)===1)&&+v>0?`${v} pcs \u00d7 ${s.size} ${s.pu} = ${n(v*factor(s))} ${base(s)}`:'';$('#mV').textContent=[f($('#mI').value),f($('#mP').value)].filter(Boolean).join('  |  ')}
-$('#bMan').onclick=()=>{const on=S.skus.filter(s=>s.on);$('#mS').innerHTML=on.length?on.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">Switch a SKU on first</option>';$('#mD').value=today;$('#mI').value=$('#mP').value='';$('#mS').selectedIndex=-1;$('#mFind').value='';$('#mList').classList.add('hide');prevM();$('#dM').showModal()};
+$('#bMan').onclick=()=>{const on=S.skus.filter(s=>s.on);$('#mS').innerHTML=on.length?on.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join(''):'<option value="">Switch a SKU on first</option>';$('#mD').value=today;$('#mI').value=$('#mP').value=$('#mR').value='';$('#mS').selectedIndex=-1;$('#mFind').value='';$('#mList').classList.add('hide');prevM();$('#dM').showModal()};
 ['mS','mI','mP'].forEach(x=>{$('#'+x).oninput=$('#'+x).onchange=prevM});
-$('#mOk').onclick=()=>{const s=$('#mS').value,d=$('#mD').value,i=$('#mI').value,p=$('#mP').value;if(!s||!d)return toast('Pick date and prod name');if(i===''&&p==='')return toast('Enter indent or production');const f={};if(i!=='')f.indent=+i;if(p!=='')f.prod=+p;upsert(d,s,f);$('#dM').close();save();render();toast('Entry saved')};
+$('#mOk').onclick=()=>{const s=$('#mS').value,d=$('#mD').value,i=$('#mI').value,p=$('#mP').value;if(!s||!d)return toast('Pick date and prod name');if(i===''&&p==='')return toast('Enter indent or production');const f={};if(i!=='')f.indent=+i;if(p!=='')f.prod=+p;const rm=$('#mR').value.trim();if(rm)f.rem=rm;upsert(d,s,f);$('#dM').close();save();render();toast('Entry saved')};
 let editId=null;
 function editSku(id){const s=S.skus.find(x=>x.id===id);if(!s)return;editId=id;$('#eN').value=s.name;$('#eC').value=s.cat;$('#eU').value=s.uom;$('#eS').value=s.size||'';$('#eP').value=s.pu||'g';$('#eW').classList.toggle('hide',s.uom!=='pcs');$('#dE').showModal()}
 $('#eU').onchange=()=>$('#eW').classList.toggle('hide',$('#eU').value!=='pcs');
@@ -306,7 +307,7 @@ $('#eOk').onclick=()=>{const s=S.skus.find(x=>x.id===editId),nm=$('#eN').value.t
 let qId=null,qRows=[];
 function drawQ(){$('#qB').innerHTML=qRows.length?qRows.map((r,k)=>`<tr><td><input type="date" value="${r.d}" data-k="${k}" data-f="d" ${!can('del')&&!r.n?'disabled':''}></td><td><input type="number" step="any" min="0" value="${r.i}" data-k="${k}" data-f="i"></td><td><input type="number" step="any" min="0" value="${r.p}" data-k="${k}" data-f="p"></td><td>${can('del')?`<button class="btn d" data-qx="${k}" aria-label="Delete row">\u2715</button>`:''}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No entries in this date range.</td></tr>'}
 function openQ(id){const s=S.skus.find(x=>x.id===id);if(!s)return;qId=id;const a=$('#from').value,b=$('#to').value;
- qRows=Object.values(S.recs).filter(r=>r.sku===id&&r.date>=a&&r.date<=b).sort((x,y)=>x.date.localeCompare(y.date)).map(r=>({d:r.date,i:r.indent,p:r.prod}));
+ qRows=Object.values(S.recs).filter(r=>r.sku===id&&r.date>=a&&r.date<=b).sort((x,y)=>x.date.localeCompare(y.date)).map(r=>({d:r.date,i:r.indent,p:r.prod,oi:r.indent,op:r.prod,ts:r.ts,rem:r.rem}));
  $('#qT').textContent=s.name+' | quantities in '+(s.uom==='pcs'?'pcs':s.uom)+' | dates '+a+' to '+b;drawQ();$('#dQ').showModal()}
 $('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(b)openQ(b.dataset.q)});
 $('#rows').addEventListener('click',e=>{const b=e.target.closest('[data-qd]');if(!b||!can('del'))return;const id=b.dataset.qd,s=S.skus.find(x=>x.id===id),a=$('#from').value,t=$('#to').value;if(!s)return;const ks=Object.keys(S.recs).filter(k=>{const r=S.recs[k];return r.sku===id&&r.date>=a&&r.date<=t});if(!confirm('Delete '+ks.length+' entries of '+s.name+' from '+a+' to '+t+'? Both indent and TR qty will be removed.'))return;ks.forEach(k=>delete S.recs[k]);save();render();toast('Entries deleted')});
@@ -314,7 +315,7 @@ $('#qB').addEventListener('input',e=>{const t=e.target;if(t.dataset.k!==undefine
 $('#qB').addEventListener('click',e=>{const b=e.target.closest('[data-qx]');if(b){qRows.splice(+b.dataset.qx,1);drawQ()}});
 $('#qA').onclick=()=>{qRows.push({d:today,i:0,p:0,n:true});drawQ()};
 $('#qOk').onclick=()=>{const a=$('#from').value,b=$('#to').value;Object.keys(S.recs).forEach(k=>{const r=S.recs[k];if(r.sku===qId&&r.date>=a&&r.date<=b)delete S.recs[k]});
- qRows.forEach(r=>{if(r.d)upsert(r.d,qId,{indent:+r.i||0,prod:+r.p||0})});$('#dQ').close();save();render();toast('Quantities updated')};
+ qRows.forEach(r=>{if(!r.d)return;const f={indent:+r.i||0,prod:+r.p||0};if(r.rem)f.rem=r.rem;if(r.ts&&f.indent===(+r.oi||0)&&f.prod===(+r.op||0))f.ts=r.ts;upsert(r.d,qId,f)});$('#dQ').close();save();render();toast('Quantities updated')};
 document.querySelectorAll('#dash .card,#admin .card').forEach(c=>{const f=c.firstElementChild;if(!f)return;const hd=f.tagName==='H2'?f:f.querySelector('h2');if(!hd)return;
  const btn=document.createElement('button');btn.className='btn tgl2';btn.textContent='\u2212';btn.setAttribute('aria-label','Hide or show this section');btn.setAttribute('aria-expanded','true');
  if(f.tagName==='H2')f.style.cssText='display:flex;justify-content:space-between;align-items:center';f.appendChild(btn);
@@ -333,18 +334,18 @@ $('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;e.target.va
 function report(kind){const cum=$('#rMode').value==='cum';const f=$('#from').value,t=$('#to').value,sk=Object.fromEntries(S.skus.filter(s=>s.on&&catSel.has(s.cat)).map(s=>[s.id,s]));
  const rs=Object.values(S.recs).filter(r=>r.date>=f&&r.date<=t&&sk[r.sku]).sort((a,b)=>a.date.localeCompare(b.date));if(!rs.length)return toast('No data in this range');
  const nm='production-report-'+(cum?'cumulative-':'')+f+'-to-'+t;
- if(cum){const m={};rs.forEach(r=>{const s=sk[r.sku],o=m[s.id]=m[s.id]||{s,i:0,p:0};o.i+=+r.indent||0;o.p+=+r.prod||0});
-  const L=Object.values(m).map(o=>{const k=factor(o.s),bi=o.i*k,bp=o.p*k,d=bp-bi;return{s:o.s,i:o.i,p:o.p,raw:o.p-o.i,bi,bp,d,b:base(o.s),st:Math.abs(d)<1e-6?'Matched':d>0?'Excess':'Short'}}).sort((a,b)=>a.s.cat.localeCompare(b.s.cat)||a.s.name.localeCompare(b.s.name));
+ if(cum){const m={};rs.forEach(r=>{const s=sk[r.sku],o=m[s.id]=m[s.id]||{s,i:0,p:0,rm:[]};o.i+=+r.indent||0;o.p+=+r.prod||0;if(r.rem)o.rm.push({d:r.date,t:r.rem})});
+  const L=Object.values(m).map(o=>{const k=factor(o.s),bi=o.i*k,bp=o.p*k,d=bp-bi;return{s:o.s,rm:o.rm,i:o.i,p:o.p,raw:o.p-o.i,bi,bp,d,b:base(o.s),st:Math.abs(d)<1e-6?'Matched':d>0?'Excess':'Short'}}).sort((a,b)=>a.s.cat.localeCompare(b.s.cat)||a.s.name.localeCompare(b.s.name));
   const dm2=x=>x.slice(8,10)+'/'+x.slice(5,7)+'/'+x.slice(0,4),per=dm2(f)+' to '+dm2(t),r2=v=>Math.round(v*100)/100;
   if(kind==='csv'){const csv='Period,Category,SKU,Entry Unit,Indent Total,TR Total,Indent (kg/L/pcs),TR (kg/L/pcs),Difference,Status,Base Unit\n'+L.map(o=>[q2(per),o.s.cat,q2(o.s.name),q2(ulabel(o.s)),r2(o.i),r2(o.p),r2(o.bi),r2(o.bp),r2(o.d),o.st,o.b].join(',')).join('\n');dl(nm+'.csv',csv);return}
-  const head=['Period','Category','SKU','Entry Unit','Indent Total','Prod Total','Difference','Status','Indent (kg/L/pcs)','Prod (kg/L/pcs)','Diff (kg/L/pcs)','Base Unit'];
-  const rows=L.map(o=>[per,o.s.cat,o.s.name,o.s.uom==='pcs'?'Pcs':o.s.uom,r2(o.i),r2(o.p),r2(o.raw),o.st,r2(o.bi),r2(o.bp),r2(o.d),o.b]);
-  const W=L.filter(o=>o.b!=='pcs'),ti=W.reduce((a,o)=>a+o.bi,0),tp=W.reduce((a,o)=>a+o.bp,0);rows.push(['TOTAL (kg/L SKUs)','','','','','','','',r2(ti),r2(tp),r2(tp-ti),'']);
+  const head=['Period','Category','SKU','Entry Unit','Indent Total','Prod Total','Difference','Status','Indent (kg/L/pcs)','Prod (kg/L/pcs)','Diff (kg/L/pcs)','Base Unit','Remarks'];
+  const rows=L.map(o=>[per,o.s.cat,o.s.name,o.s.uom==='pcs'?'Pcs':o.s.uom,r2(o.i),r2(o.p),r2(o.raw),o.st,r2(o.bi),r2(o.bp),r2(o.d),o.b,o.rm.length>1?o.rm.map(x=>dm2(x.d).slice(0,5)+': '+x.t).join('; '):(o.rm[0]?o.rm[0].t:'')]);
+  const W=L.filter(o=>o.b!=='pcs'),ti=W.reduce((a,o)=>a+o.bi,0),tp=W.reduce((a,o)=>a+o.bp,0);rows.push(['TOTAL (kg/L SKUs)','','','','','','','',r2(ti),r2(tp),r2(tp-ti),'','']);
   exportFile(kind,nm,head,rows,dm2(f),dm2(t));return}
  if(kind==='csv'){const csv='Date,Category,SKU,Entry Unit,Indent Entered,TR Entered,Indent (kg/L),TR (kg/L),Difference,Status,Base Unit\n'+rs.map(r=>{const s=sk[r.sku],k=factor(s),i=r.indent*k,p=r.prod*k,d=p-i;return[r.date,s.cat,q2(s.name),q2(ulabel(s)),r.indent,r.prod,+i.toFixed(3),+p.toFixed(3),+d.toFixed(3),Math.abs(d)<1e-6?'OK':d>0?'Excess':'Short',base(s)].join(',')}).join('\n');dl(nm+'.csv',csv);return}
  const dm=x=>x.slice(8,10)+'/'+x.slice(5,7)+'/'+x.slice(0,4);
- const head=['Date','Category','SKU','Entry Unit','Indent','Prod','Difference','Status'];
- const rows=rs.map(r=>{const s=sk[r.sku],raw=r.prod-r.indent;return[dm(r.date),s.cat,s.name,s.uom==='pcs'?'Pcs':s.uom,+r.indent||0,+r.prod||0,Math.round(raw*100)/100,Math.abs(raw)<1e-6?'Matched':raw>0?'Excess':'Short']});
+ const head=['Date','Category','SKU','Entry Unit','Indent','Prod','Difference','Status','Remarks'];
+ const rows=rs.map(r=>{const s=sk[r.sku],raw=r.prod-r.indent;return[dm(r.date),s.cat,s.name,s.uom==='pcs'?'Pcs':s.uom,+r.indent||0,+r.prod||0,Math.round(raw*100)/100,Math.abs(raw)<1e-6?'Matched':raw>0?'Excess':'Short',r.rem||'']});
  exportFile(kind,nm,head,rows,dm(f),dm(t))}
 $('#bDl').onclick=()=>$('#dR').showModal();
 $('#dR').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{$('#dR').close();report(b.dataset.k)});
@@ -352,9 +353,9 @@ async function saveFile(name,data){fileOut(name,new Blob([data]),name.endsWith('
 async function exportFile(kind,nm,head,rows,f,t){
  if(kind==='xlsx'){const wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Report'),bd={style:'thin',color:{argb:'FF000000'}},B={top:bd,left:bd,bottom:bd,right:bd};
   ws.addRow(['Indent vs Production report: '+f+' to '+t]).font={bold:true,size:12,color:{argb:'FF000000'}};ws.mergeCells('A1:H1');ws.addRow([]);
-  [head,...rows].forEach((r,i)=>{const row=ws.addRow(r);row.eachCell(c=>{c.border=B;c.font={name:'Calibri',size:11,bold:i===0,color:{argb:'FF000000'}};if(i===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}};else if(typeof c.value==='number')c.numFmt='0.00'})});
-  ws.columns.forEach(c=>c.width=15);ws.getColumn(3).width=32;saveFile(nm+'.xlsx',await wb.xlsx.writeBuffer())}
+  [head,...rows].forEach((r,i)=>{const row=ws.addRow(r);row.eachCell(c=>{c.border=B;c.font={name:'Calibri',size:11,bold:i===0,color:{argb:'FF000000'}};if(i===0)c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD9D9D9'}};else if(typeof c.value==='number')c.numFmt='0.00';if(c.col===head.length)c.alignment={wrapText:true,vertical:'top'}})});
+  ws.columns.forEach(c=>c.width=15);ws.getColumn(3).width=32;ws.getColumn(head.length).width=40;saveFile(nm+'.xlsx',await wb.xlsx.writeBuffer())}
  else{const doc=new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});doc.setTextColor(0);doc.setFontSize(13);doc.text('Indent vs Production report: '+f+' to '+t,14,14);
-  doc.autoTable({head:[head],body:rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:20,theme:'grid',styles:{fontSize:8,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:.2},columnStyles:{4:{halign:'right'},5:{halign:'right'},6:{halign:'right'}},headStyles:{fillColor:[217,217,217],textColor:[0,0,0],fontStyle:'bold',lineColor:[0,0,0],lineWidth:.2},bodyStyles:{textColor:[0,0,0]}});
+  doc.autoTable({head:[head],body:rows.map(r=>r.map(v=>typeof v==='number'?v.toFixed(2):v)),startY:20,theme:'grid',styles:{fontSize:8,textColor:[0,0,0],lineColor:[0,0,0],lineWidth:.2},columnStyles:{4:{halign:'right'},5:{halign:'right'},6:{halign:'right'},[head.length-1]:{halign:'left',cellWidth:40}},headStyles:{fillColor:[217,217,217],textColor:[0,0,0],fontStyle:'bold',lineColor:[0,0,0],lineWidth:.2},bodyStyles:{textColor:[0,0,0]}});
   saveFile(nm+'.pdf',doc.output('arraybuffer'))}}
 </script></body></html>
